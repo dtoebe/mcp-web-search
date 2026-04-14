@@ -40,3 +40,5 @@ select = [ "E", "F", "I", "UP" ]
 [tool.pyright]
 pythonVersion = "3.13"
 typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingSubTypes = false
