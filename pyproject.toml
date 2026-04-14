@@ -17,3 +17,25 @@ dev = [
     "pyright>=1.1.408",
     "ruff>=0.15.10",
 ]
+
+[project.scripts]
+mcp-server = "mcp_web_search.server:main"
+mcp-cli = "mcp_web_search.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-bakcend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tavily_search"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [ "E", "F", "I", "UP" ]
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
