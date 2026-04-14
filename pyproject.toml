@@ -1,0 +1,19 @@
+[project]
+name = "mcp-web-search"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mcp>=1.27.0",
+    "ollama>=0.6.1",
+    "python-dotenv>=1.2.2",
+    "rich>=15.0.0",
+    "tavily-python>=0.7.23",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.408",
+    "ruff>=0.15.10",
+]
