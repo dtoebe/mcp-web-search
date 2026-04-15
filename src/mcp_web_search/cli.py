@@ -37,6 +37,19 @@ console = Console()
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e2b")
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "")
+
+def load_system_prompt(value: str) -> str:
+    """Load system prompt from file (SYSTEM_PROMPT="file:file.md") or return the raw string."""
+    if value.startswith("file:"):
+        path = Path(value[5:])
+        if not path.is_absolute():
+            path = Path(__file__).parent.parent.parent / path
+        if not path.exists():
+            raise FileNotFoundError(f"System Prompt file not found: {path}")
+        logger.info("Loading system prompt from file: %s", path)
+        return path.read_text(encoding="utf-8")
+    return value
 
 def mcp_tool_to_ollama_tool(tool: Tool) -> dict:
     """convert an MCP Tool definition to Ollama's tool format."""
@@ -80,7 +93,13 @@ async def run_cli() -> None:
                 )
             )
 
-            messages: list[dict] = []
+            messages: list[dict] = [
+                {
+                    "role": "system",
+                    "content": load_system_prompt(SYSTEM_PROMPT),
+                }
+            ]
+            logger.info("SYSTEM PROMPT: %s", SYSTEM_PROMPT)
 
             while True:
                 try:
