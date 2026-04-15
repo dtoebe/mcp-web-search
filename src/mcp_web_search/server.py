@@ -69,15 +69,57 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["query"],
             },
+        ),
+        Tool(
+            name="Get_DateTime",
+            description="Get the current date and time. Use this when the user asks about the current date or time, or when you need to know today's date to answer a question accurately",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "timezone": {
+                        "type": "string",
+                        "description": "IANA timezone name (e.g. 'America/Denver', 'UTC'). Defaults to local system time",
+                        "default": "local",
+                    }
+                },
+                "required": []
+            }
         )
     ]
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Dispatch tool calls"""
-    if name != "Web_Search":
-        raise ValueError(f"Unknown tool: {name!r}")
+    match name:
+        case "Web_Search":
+            return await call_web_search(arguments)
+        case "Get_DateTime":
+            return await call_get_datetime(arguments)
+        case _:
+            raise ValueError(f"Unknown tool: {name!r}")
 
+async def call_get_datetime(arguments: dict) -> list[TextContent]:
+    """Tool call to get current time based off timezone"""
+    import datetime
+    tz_name = arguments.get("timezone", "local")
+
+    try:
+        if tz_name == "local":
+            now = datetime.datetime.now().astimezone()
+        else:
+            import zoneinfo
+            tz = zoneinfo.ZoneInfo(tz_name)
+            now = datetime.datetime.now(tz)
+    except Exception:
+        logger.warning("Unknown timezone %r, falling back to 'local'", tz_name)
+        now = datetime.datetime.now().astimezone()
+    
+    result = now.strftime("%A, %B %d, %Y %I:%M:%S %p %Z")
+    logger.info("Get DateTime | %s", result)
+    return [TextContent(type="text", text=result)]
+
+async def call_web_search(arguments: dict) -> list[TextContent]:
+    """Tool call to retrieve web search results"""
     query: str = arguments["query"]
     max_results = arguments.get("max_results", 5)
     search_depth = arguments.get("search_depth", "basic")
