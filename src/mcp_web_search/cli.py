@@ -135,7 +135,7 @@ async def run_cli() -> None:
                                 "content": tool_result,
                             })
 
-                            continue
+                        continue   
                     
                     final_text = msg.content or ""
                     logger.debug("Assistant: %.200s", final_text)
