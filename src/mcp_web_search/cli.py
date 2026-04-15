@@ -1,6 +1,8 @@
 """CLI Client: chat with ollama server using the mcp-web-search"""
 from dotenv import load_dotenv
 
+from mcp_web_search.save_session import parse_save_cmd, save_history
+
 load_dotenv()
 
 import asyncio
@@ -16,6 +18,8 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from mcp import ClientSession, StdioServerParameters
+from mcp_web_search.system_prompt import load_system_prompt
+from mcp_web_search import init_logger
 
 
 # Logging
@@ -23,33 +27,17 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_DIR = Path(__file__).parent.parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(LOG_DIR / "cli.log")
-    ],
+logger = init_logger(
+    "mcp_web_search.cli",
+    LOG_LEVEL,
+    os.path.join(LOG_DIR, "cli.log")
 )
-logger = logging.getLogger("mcp_web_search.cli")
 
 console = Console()
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e2b")
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are a helpful assistant with tools.")
-
-def load_system_prompt(value: str) -> str:
-    """Load system prompt from file (SYSTEM_PROMPT="file:file.md") or return the raw string."""
-    if value.startswith("file:"):
-        path = Path(value[5:])
-        if not path.is_absolute():
-            path = Path(__file__).parent.parent.parent / path
-        if not path.exists():
-            raise FileNotFoundError(f"System Prompt file not found: {path}")
-        logger.info("Loading system prompt from file: %s", path)
-        return path.read_text(encoding="utf-8")
-    return value
 
 def mcp_tool_to_ollama_tool(tool: Tool) -> dict:
     """convert an MCP Tool definition to Ollama's tool format."""
@@ -111,6 +99,16 @@ async def run_cli() -> None:
                 if user_input.strip().lower() in {"exit", "quit", "q"}:
                     console.print("[dim]Good Bye[/dim]")
                     break
+
+                if save_cmd := parse_save_cmd(user_input):
+                    mode, path = save_cmd
+                    try:
+                        save_history(messages, path, mode)
+                        console.print(f"[dim] Saved {mode} history to [bold]{path}[/bold][/dim]")
+                    except Exception as e:
+                        logger.exception("Failed to save history")
+                        console.print(f"[red]Failed to save: {e}[/red]")
+                    continue
                 
                 if not user_input.strip():
                     continue
