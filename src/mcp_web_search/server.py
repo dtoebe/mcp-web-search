@@ -45,7 +45,7 @@ async def list_tools() -> list[Tool]:
             name="Web_Search",
             description=(
                 "Search the web using Tavily and return relevant results. "
-                "Use for anything that would requre current results. "
+                "Use for anything that would require current results. "
                 "For example looking up documentation for software libraries, current events, facts, news, ect..."
             ),
             inputSchema={
@@ -62,7 +62,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "search_depth": {
                         "type": "string",
-                        "enum": ["basic", "advacned"],
+                        "enum": ["basic", "advanced"],
                         "description": "Search depth - 'basic' is faster, 'advanced' id more thorough",
                         "default": "basic",
                     },
@@ -84,7 +84,12 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": []
             }
-        )
+        ),
+        Tool(
+            name="Get_System_Timezone",
+            description="Get the system's timezone. Use this when the user asks about current date and or time, or when you need to know exact time or date to retrieve the question accurately.",
+            inputSchema={},
+        ),
     ]
 
 @app.call_tool()
@@ -95,8 +100,16 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await call_web_search(arguments)
         case "Get_DateTime":
             return await call_get_datetime(arguments)
+        case "Get_System_Timezone":
+            return await call_get_system_timezone()
         case _:
             raise ValueError(f"Unknown tool: {name!r}")
+
+async def call_get_system_timezone() -> list[TextContent]:
+    """Tool call to get system timezone"""
+    import datetime
+    results = datetime.datetime.now().astimezone().tzname() or "UTC"
+    return [TextContent(type="text", text=results)]
 
 async def call_get_datetime(arguments: dict) -> list[TextContent]:
     """Tool call to get current time based off timezone"""
