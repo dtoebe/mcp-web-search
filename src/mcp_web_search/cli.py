@@ -37,7 +37,7 @@ console = Console()
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e2b")
-SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "")
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are a helpful assistant with tools.")
 
 def load_system_prompt(value: str) -> str:
     """Load system prompt from file (SYSTEM_PROMPT="file:file.md") or return the raw string."""
