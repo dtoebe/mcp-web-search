@@ -1,16 +1,18 @@
 """MCP Server exposing Web Search via Tavily"""
 
+from pathlib import Path
+from dotenv import load_dotenv
+
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
 import logging
 import os
-from pathlib import Path
 
-from dotenv import load_dotenv
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 from tavily import TavilyClient
-
-load_dotenv()
 
 # Setup Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

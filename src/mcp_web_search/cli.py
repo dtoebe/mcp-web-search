@@ -1,12 +1,13 @@
 """CLI Client: chat with ollama server using the mcp-web-search"""
+
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 import asyncio
-import logging
 import os
-from pathlib import Path
 import sys
 import ollama
 from mcp.client.stdio import stdio_client
