@@ -1,8 +1,6 @@
 """CLI Client: chat with ollama server using the mcp-web-search"""
 from dotenv import load_dotenv
 
-from mcp_web_search.save_session import parse_save_cmd, save_history
-
 load_dotenv()
 
 import asyncio
@@ -20,6 +18,7 @@ from rich.prompt import Prompt
 from mcp import ClientSession, StdioServerParameters
 from mcp_web_search.system_prompt import load_system_prompt
 from mcp_web_search import init_logger
+from mcp_web_search.save_session import parse_save_cmd, save_history
 
 
 # Logging
@@ -76,6 +75,7 @@ async def run_cli() -> None:
                     f"[bold green]MCP Web Search CLI[/bold green]\n"
                     f"Model: [cyan]{OLLAMA_MODEL}[/cyan]\n"
                     f"Tools: [yellow]{', '.join(tool_map)}[/yellow]\n"
+                    f"Type [bold]save chat|last <path>[/bold] to save | "
                     f"Type [bold]exit[/bold] or [bold]quit[/bold] to leave.",
                     expand=False
                 )
@@ -103,6 +103,7 @@ async def run_cli() -> None:
                 if save_cmd := parse_save_cmd(user_input):
                     mode, path = save_cmd
                     try:
+                        # logger.info(messages)
                         save_history(messages, path, mode)
                         console.print(f"[dim] Saved {mode} history to [bold]{path}[/bold][/dim]")
                     except Exception as e:

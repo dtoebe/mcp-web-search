@@ -17,18 +17,21 @@ def save_history(messages: list[dict], path: str, mode: str) -> None:
 
     lines = [f"# Chat History\n\n> Saved: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"]
 
-    if mode == "last":
-        to_save = next((m for m in reversed(visible) if m["role"] == "assistant"))
-        for line in to_save["content"]:
-            lines.append(line)
-    else:
-        to_save = visible
-        for msg in to_save:
-            role = msg.get("role", "unknown")
-            content = msg.get("content") or ""
-            lines.append(f"\n### {role.upper()}:\n\n{content}\n")
+    match mode.lower():
+        case "last":
+            to_save = next((m for m in reversed(visible) if m["role"] == "assistant"))
+            for line in to_save["content"]:
+                lines.append(line)
+        case "chat":
+            to_save = visible
+            for msg in to_save:
+                role = msg.get("role", "unknown")
+                content = msg.get("content") or ""
+                lines.append(f"\n### {role.upper()}:\n\n{content}\n")
+        case _:
+            raise Exception(f"Unknown save mode ({mode}) please use `save last|chat <path>`")
 
-    output.write_text("\n".join(lines), encoding="utf-8")
+    output.write_text("".join(lines), encoding="utf-8")
 
 def parse_save_cmd(user_input: str) -> tuple[str, str] | None:
     """Parse 'save chat|last <path> commands. Returns (mode, path) or None"""
