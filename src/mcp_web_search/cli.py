@@ -9,35 +9,33 @@ load_dotenv(dotenv_path=env_path)
 import asyncio
 import os
 import sys
+
 import ollama
+from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.types import Tool
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
-from mcp import ClientSession, StdioServerParameters
-from mcp_web_search.system_prompt import load_system_prompt
+
 from mcp_web_search import init_logger
 from mcp_web_search.save_session import parse_save_cmd, save_history
-
+from mcp_web_search.system_prompt import load_system_prompt
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_DIR = Path(__file__).parent.parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
-logger = init_logger(
-    "mcp_web_search.cli",
-    LOG_LEVEL,
-    os.path.join(LOG_DIR, "cli.log")
-)
+logger = init_logger("mcp_web_search.cli", LOG_LEVEL, os.path.join(LOG_DIR, "cli.log"))
 
 console = Console()
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e2b")
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are a helpful assistant with tools.")
+
 
 def mcp_tool_to_ollama_tool(tool: Tool) -> dict:
     """convert an MCP Tool definition to Ollama's tool format."""
@@ -49,6 +47,7 @@ def mcp_tool_to_ollama_tool(tool: Tool) -> dict:
             "parameters": tool.inputSchema,
         },
     }
+
 
 async def run_cli() -> None:
     """CLI's Main Loop"""
@@ -67,7 +66,7 @@ async def run_cli() -> None:
             tools_result = await session.list_tools()
             mcp_tools = tools_result.tools
             ollama_tools = [mcp_tool_to_ollama_tool(t) for t in mcp_tools]
-            
+
             tool_map = {t.name: t for t in mcp_tools}
             logger.info("Loaded MCP tools: %s", [t.name for t in mcp_tools])
 
@@ -78,7 +77,7 @@ async def run_cli() -> None:
                     f"Tools: [yellow]{', '.join(tool_map)}[/yellow]\n"
                     f"Type [bold]save chat|last <path>[/bold] to save | "
                     f"Type [bold]exit[/bold] or [bold]quit[/bold] to leave.",
-                    expand=False
+                    expand=False,
                 )
             )
 
@@ -111,7 +110,7 @@ async def run_cli() -> None:
                         logger.exception("Failed to save history")
                         console.print(f"[red]Failed to save: {e}[/red]")
                     continue
-                
+
                 if not user_input.strip():
                     continue
 
@@ -145,25 +144,32 @@ async def run_cli() -> None:
                             else:
                                 result = await session.call_tool(tool_name, dict(tool_args))
                                 tool_result = "\n".join(
-                                    c.text for c in result.content if hasattr(c, "text") # type: ignore
+                                    c.text # type: ignore
+                                    for c in result.content
+                                    if hasattr(c, "text")  # type: ignore
                                 )
 
-                            logger.debug("Tool result (%d chars) %.200s", len(tool_result), tool_result)
-                            messages.append({
-                                "role": "tool",
-                                "content": tool_result,
-                            })
+                            logger.debug(
+                                "Tool result (%d chars) %.200s", len(tool_result), tool_result
+                            )
+                            messages.append(
+                                {
+                                    "role": "tool",
+                                    "content": tool_result,
+                                }
+                            )
+                        continue
 
-                        continue   
-                    
                     final_text = msg.content or ""
                     logger.debug("Assistant: %.200s", final_text)
                     console.print("\n[bold green]Assistant[/bold green]")
                     console.print(Markdown(final_text))
                     break
 
+
 def main() -> None:
     asyncio.run(run_cli())
+
 
 if __name__ == "__main__":
     main()
